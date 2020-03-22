@@ -10,6 +10,7 @@ import (
 	_ "crypto/sha256"
 	"hash"
 	"io"
+	"log"
 	"strconv"
 
 	"golang.org/x/crypto/openpgp/armor"
@@ -102,15 +103,18 @@ ParsePackets:
 	for {
 		p, err = packets.Next()
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
 		switch p := p.(type) {
 		case *packet.SymmetricKeyEncrypted:
 			// This packet contains the decryption key encrypted with a passphrase.
+			log.Println("This packet contains the decryption key encrypted with a passphrase.")
 			md.IsSymmetricallyEncrypted = true
 			symKeys = append(symKeys, p)
 		case *packet.EncryptedKey:
 			// This packet contains the decryption key encrypted to a public key.
+			log.Println("This packet contains the decryption key encrypted to a public key.")
 			md.EncryptedToKeyIds = append(md.EncryptedToKeyIds, p.KeyId)
 			switch p.Algo {
 			case packet.PubKeyAlgoRSA, packet.PubKeyAlgoRSAEncryptOnly, packet.PubKeyAlgoElGamal:
@@ -129,9 +133,11 @@ ParsePackets:
 			}
 		case *packet.SymmetricallyEncrypted:
 			se = p
+			log.Println("break ParsePackets")
 			break ParsePackets
 		case *packet.Compressed, *packet.LiteralData, *packet.OnePassSignature:
 			// This message isn't encrypted.
+			log.Println("This message isn't encrypted.")
 			if len(symKeys) != 0 || len(pubKeys) != 0 {
 				return nil, errors.StructuralError("key material not followed by encrypted message")
 			}
@@ -154,24 +160,31 @@ FindKey:
 
 		for _, pk := range pubKeys {
 			if pk.key.PrivateKey == nil {
+				log.Println("No private key")
 				continue
 			}
 			if !pk.key.PrivateKey.Encrypted {
+				log.Println("!pk.key.PrivateKey.Encrypted")
 				if len(pk.encryptedKey.Key) == 0 {
+					log.Println("len(pk.encryptedKey.Key) == 0")
 					pk.encryptedKey.Decrypt(pk.key.PrivateKey, config)
 				}
 				if len(pk.encryptedKey.Key) == 0 {
 					continue
 				}
 				decrypted, err = se.Decrypt(pk.encryptedKey.CipherFunc, pk.encryptedKey.Key)
+				log.Println(decrypted)
+				log.Println(err)
 				if err != nil && err != errors.ErrKeyIncorrect {
 					return nil, err
 				}
 				if decrypted != nil {
 					md.DecryptedWith = pk.key
+					log.Println("decrypted != nil")
 					break FindKey
 				}
 			} else {
+				log.Println("fpr := string(pk.key.PublicKey.Fingerprint[:])")
 				fpr := string(pk.key.PublicKey.Fingerprint[:])
 				if v := candidateFingerprints[fpr]; v {
 					continue
@@ -182,19 +195,24 @@ FindKey:
 		}
 
 		if len(candidates) == 0 && len(symKeys) == 0 {
+			log.Println("len(candidates) == 0 && len(symKeys) == 0")
 			return nil, errors.ErrKeyIncorrect
 		}
 
 		if prompt == nil {
+			log.Println("prompt == nil")
 			return nil, errors.ErrKeyIncorrect
 		}
 
 		passphrase, err := prompt(candidates, len(symKeys) != 0)
+		log.Println(passphrase)
+		log.Println(err)
 		if err != nil {
 			return nil, err
 		}
 
 		// Try the symmetric passphrase first
+		log.Println("Try the symmetric passphrase first")
 		if len(symKeys) != 0 && passphrase != nil {
 			for _, s := range symKeys {
 				key, cipherFunc, err := s.Decrypt(passphrase)
@@ -214,6 +232,7 @@ FindKey:
 
 	md.decrypted = decrypted
 	if err := packets.Push(decrypted); err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	return readSignedMessage(packets, md, keyring)
