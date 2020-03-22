@@ -159,6 +159,7 @@ FindKey:
 		candidateFingerprints := make(map[string]bool)
 
 		for _, pk := range pubKeys {
+			log.Println(pk)
 			if pk.key.PrivateKey == nil {
 				log.Println("No private key")
 				continue
