@@ -118,8 +118,10 @@ ParsePackets:
 			md.EncryptedToKeyIds = append(md.EncryptedToKeyIds, p.KeyId)
 			switch p.Algo {
 			case packet.PubKeyAlgoRSA, packet.PubKeyAlgoRSAEncryptOnly, packet.PubKeyAlgoElGamal:
+				log.Println("packet.PubKeyAlgoRSA, packet.PubKeyAlgoRSAEncryptOnly, packet.PubKeyAlgoElGamal")
 				break
 			default:
+				log.Println("Default !!!!!!!")
 				continue
 			}
 			var keys []Key
@@ -128,6 +130,7 @@ ParsePackets:
 			} else {
 				keys = keyring.KeysById(p.KeyId)
 			}
+			log.Println(keys)
 			for _, k := range keys {
 				pubKeys = append(pubKeys, keyEnvelopePair{k, p})
 			}
