@@ -125,14 +125,14 @@ ParsePackets:
 				continue
 			}
 			var keys []Key
-			// if p.KeyId == 0 {
-			// 	log.Println(p.KeyId)
-			// 	keys = keyring.DecryptionKeys()
-			// } else {
-			// 	log.Println(p.KeyId)
-			// 	keys = keyring.KeysById(p.KeyId)
-			// }
-			keys = keyring.DecryptionKeys()
+			if p.KeyId == 0 {
+				log.Println(p.KeyId)
+				keys = keyring.DecryptionKeys()
+			} else {
+				log.Println(p.KeyId)
+				keys = keyring.KeysById(p.KeyId)
+			}
+			// keys = keyring.DecryptionKeys()
 			log.Println(keys)
 			for _, k := range keys {
 				pubKeys = append(pubKeys, keyEnvelopePair{k, p})
