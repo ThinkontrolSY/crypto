@@ -126,8 +126,10 @@ ParsePackets:
 			}
 			var keys []Key
 			if p.KeyId == 0 {
+				log.Println(p.KeyId)
 				keys = keyring.DecryptionKeys()
 			} else {
+				log.Println(p.KeyId)
 				keys = keyring.KeysById(p.KeyId)
 			}
 			log.Println(keys)
