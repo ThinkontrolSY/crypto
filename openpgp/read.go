@@ -158,6 +158,8 @@ FindKey:
 		candidates = candidates[:0]
 		candidateFingerprints := make(map[string]bool)
 
+		log.Println(pubKeys)
+
 		for _, pk := range pubKeys {
 			log.Println(pk)
 			if pk.key.PrivateKey == nil {
